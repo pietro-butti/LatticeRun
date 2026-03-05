@@ -4,19 +4,9 @@ authors = ["Pietro Butti <pietro.butti.fl@gmail.com>"]
 version = "0.1.0"
 
 [deps]
-ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
 BDIO = "375f315e-f2c4-11e9-2ef9-134f02f79e27"
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 LatticeGPU = "958c3683-801a-4582-9cfa-2d6e2ae1763b"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
-
-[compat]
-ArgParse = "1.2.0"
-BDIO = "0.1.0"
-CUDA = "5.9.7"
-Dates = "1.11.0"
-LatticeGPU = "0.2.0"
-Printf = "1.11.0"
-TOML = "1.0.3"

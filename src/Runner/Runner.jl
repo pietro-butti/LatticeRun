@@ -98,9 +98,9 @@ module Runner
                 push!(flow_kernels, "Zeuthen" => zfl_rk3(Float64, p.epsilon, 1e-7))
         end
 
-        # --- gauge field initialisation ---------------------------------------
-        itraj = init_gauge_field!(U, p, lp, gp, ymws, lg)
-
+        # --- gauge field initialisation --------------------------------------- 
+	itraj = init_gauge_field!(U, p, lp, gp, ymws, lg)
+	
         plq = plaquette(U, lp, gp, ymws)
         log_tag(lg, TAG_INIT, "initial plaquette = %.16e", plq / 2)
 
@@ -111,22 +111,18 @@ module Runner
 
 
 
-
-
-
-
     function init_gauge_field!(U, p::SimParams, lp, gp, ymws, lg::SimLogger)
         
         if isnothing(p.start_from) || p.start_from == "cold"
             fill!(U, one(eltype(U)))
-            log_line(lg, "# [INIT] Cold start: gauge field set to unit configuration")
+            log_tag(lg, TAG_INIT, "Cold start: gauge field set to unit configuration")
         elseif p.start_from == "hot"
             randomize!(ymws.mom, lp, ymws)
             U .= exp.(ymws.mom)
-            log_line(lg, "# [INIT] Hot start: gauge field set to unit configuration")
-        elseif isfile(p.start_cnfg)
+            log_tag(lg, TAG_INIT, "Hot start: gauge field set to unit configuration")
+        elseif isfile(p.start_from)
             U .= LatticeGPU.read_cnfg(U; block=p.Lx)
-            log_line(lg, "# [INIT] Loading explicit starting config: $(p.start_cnfg)")
+            log_tag(lg, TAG_INIT, "Loading explicit starting config: %s",p.start_from)
         else
             error("Starting configuration not find. Select `cold`, `hot` or `<filename>`")
         end
