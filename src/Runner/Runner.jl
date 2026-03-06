@@ -170,16 +170,16 @@ module Runner
                  run_measurements!(state, measurements, p, lg)
              end
 
-    #         # -- periodic save -------------------------------------------------
-    #         if !isnothing(p.save_each) && state.itraj % p.save_each == 0
-    #             save_config!(state, p, lg)
-    #         end
-    #     end
+            # -- periodic save -------------------------------------------------
+            if !isnothing(p.save_each) && state.itraj % p.save_each == 0
+                save_config!(state, p, lg)
+            end
+        end
 
-    #     # -- final save --------------------------------------------------------
-    #     if p.save_final
-    #         save_config!(state, p, lg)
-    #     end
+        # -- final save --------------------------------------------------------
+        if p.save_final
+            save_config!(state, p, lg)
+        end
 
          log_tag(lg, TAG_HMC, "production complete  (itraj = %i)", state.itraj)
      end
