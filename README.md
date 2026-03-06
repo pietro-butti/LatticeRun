@@ -9,16 +9,16 @@ LatticeRun handles everything *around* the physics: parameter management, struct
 ## Table of contents
 
 1. [Installation](#installation)
-2. [Repository layout](#repository-layout)
-3. [How the package works](#how-the-package-works)
+2. [Running a simulation](#running-a-simulation)
+3. [Repository layout](#repository-layout)
+4. [How the package works](#how-the-package-works)
    - [Parameters](#parameters-parameterjl)
    - [Logger](#logger-loggerjl)
    - [Runner](#runner-runnerjl)
-4. [Setting parameters](#setting-parameters)
+5. [Setting parameters](#setting-parameters)
    - [TOML input file (recommended)](#toml-input-file-recommended)
    - [Programmatic Dict](#programmatic-dict)
    - [Parameter reference](#parameter-reference)
-5. [Running a simulation](#running-a-simulation)
 6. [Log format and output routing](#log-format-and-output-routing)
 7. [Extension guide](#extension-guide)
    - [Adding a new parameter](#adding-a-new-parameter)
@@ -48,6 +48,43 @@ A CUDA-capable GPU and a working CUDA installation are required at runtime.
 
 **Dependencies** (resolved automatically via `Project.toml`):
 `LatticeGPU`, `BDIO`, `CUDA`, `Dates`, `Printf`, `TOML`
+
+---
+
+## Running a simulation
+
+A minimal script using all defaults:
+
+```julia
+using LatticeRun
+
+p  = SimParams("input.toml")
+validate(p)
+
+lg = SimLogger(p; redirects = Dict(TAG_FLOW => "$(p.ens_name)_flow.dat"))
+log_banner!(lg, p)
+
+state    = setup_simulation(p, lg)
+schedule = MCSchedule([(HMCUpdate(), 1)])
+meas     = Measurement[FlowMeasurement()]
+
+thermalize!(state, schedule, p, lg)
+run!(state, schedule, meas, p, lg)
+
+close_logger(lg)
+```
+
+Omitting the `TAG_FLOW` redirect causes flow data to go to the main log instead of a separate file:
+
+```julia
+lg = SimLogger(p)   # no redirects → all output to main log / stdout
+```
+
+To run without any measurements:
+
+```julia
+run!(state, schedule, Measurement[], p, lg)
+```
 
 ---
 
@@ -266,43 +303,6 @@ Fields typed `Union{T, Nothing}` are optional. Setting them to `nothing` (or omi
 | | `nflow` | `Int?` | `nothing` | |
 | | `adaptive` | `Bool?` | `nothing` | Requires `Tflow` if `true` |
 | | `Tflow` | `Float64?` | `nothing` | Max flow time for adaptive mode |
-
----
-
-## Running a simulation
-
-A minimal script using all defaults:
-
-```julia
-using LatticeRun
-
-p  = SimParams("input.toml")
-validate(p)
-
-lg = SimLogger(p; redirects = Dict(TAG_FLOW => "$(p.ens_name)_flow.dat"))
-log_banner!(lg, p)
-
-state    = setup_simulation(p, lg)
-schedule = MCSchedule([(HMCUpdate(), 1)])
-meas     = Measurement[FlowMeasurement()]
-
-thermalize!(state, schedule, p, lg)
-run!(state, schedule, meas, p, lg)
-
-close_logger(lg)
-```
-
-Omitting the `TAG_FLOW` redirect causes flow data to go to the main log instead of a separate file:
-
-```julia
-lg = SimLogger(p)   # no redirects → all output to main log / stdout
-```
-
-To run without any measurements:
-
-```julia
-run!(state, schedule, Measurement[], p, lg)
-```
 
 ---
 
