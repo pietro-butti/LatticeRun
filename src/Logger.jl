@@ -44,9 +44,10 @@ module Logger
     Construct with `SimLogger(...)`, shut down with `close_logger(lg)`.
     """
     struct SimLogger
-        screen    :: Union{IO, Nothing}
-        file      :: Union{IO, Nothing}
-        redirects :: Dict{String, IO}   # tag → open file handle
+        screen             :: Union{IO, Nothing}
+        file               :: Union{IO, Nothing}
+        redirects          :: Dict{String, IO}   # tag → open file handle
+        redirect_announced :: Set{String}        # tags whose stub has been printed once
     end
 
 
@@ -80,7 +81,7 @@ module Logger
             tag => open(path, "a") for (tag, path) in redirects
         )
 
-        return SimLogger(screen, fh, redirect_ios)
+        return SimLogger(screen, fh, redirect_ios, Set{String}())
     end
 
     """
@@ -165,9 +166,11 @@ module Logger
             print(redir_io, line)
             flush(redir_io)
 
-            redir_name = redir_io isa IOStream ? redir_io.name : repr(redir_io)
-            stub = prefix * "output appended → $redir_name\n"
-            _write_main(lg, stub)
+            if tag ∉ lg.redirect_announced
+                redir_name = redir_io isa IOStream ? redir_io.name : repr(redir_io)
+                _write_main(lg, prefix * "output redirected → $redir_name\n")
+                push!(lg.redirect_announced, tag)
+            end
         else
             _write_main(lg, line)
         end
@@ -245,7 +248,6 @@ module Logger
             close(io)
         end
     end
-
 
     export TAG_INIT, TAG_IO, TAG_THERM, TAG_HMC, TAG_FLOW
     export SimLogger, log_banner!, log_tag, log_conf, close_logger
