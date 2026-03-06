@@ -145,31 +145,30 @@ module Runner
     # end
 
 
-    # """
-    #     produce!(state, schedule, measurements, p, lg)
+     """
+         produce!(state, schedule, measurements, p, lg)
 
-    # Run `p.ntraj` production MC sweeps.
+     Run `p.ntraj` production MC sweeps.
 
-    # After each sweep:
-    # - measurements are run if `state.itraj % p.flow_each == 0`
-    # - the configuration is saved if `state.itraj % p.save_each == 0`
+     After each sweep:
+     - measurements are run if `state.itraj % p.flow_each == 0`
+     - the configuration is saved if `state.itraj % p.save_each == 0`
 
-    # If `p.save_final` is true the last configuration is always saved,
-    # regardless of `save_each`.
-    # """
-    # function run!(state::SimState, schedule::MCSchedule,
-    #                 measurements::Vector{<:Measurement},
-    #                 p::SimParams, lg::SimLogger)
+     If `p.save_final` is true the last configuration is always saved, regardless of `save_each`.
+     """
+     function run!(state::SimState, schedule::MCSchedule,
+                     measurements::Vector{<:Measurement},
+                     p::SimParams, lg::SimLogger)
 
-    #     log_tag(lg, TAG_HMC, "starting production (%i trajectories)", p.ntraj)
+         log_tag(lg, TAG_HMC, "starting production (%i trajectories)", p.ntraj)
 
-    #     for _ in 1:p.ntraj
-    #         mc_sweep!(state, schedule, p, lg)
+         for _ in 1:p.ntraj
+             mc_sweep!(state, schedule, p, lg)
 
-    #         # -- measurements --------------------------------------------------
-    #         if !isnothing(p.flow_each) && state.itraj % p.flow_each == 0
-    #             run_measurements!(state, measurements, p, lg)
-    #         end
+             # -- measurements --------------------------------------------------
+             if !isnothing(p.flow_each) && state.itraj % p.flow_each == 0
+                 run_measurements!(state, measurements, p, lg)
+             end
 
     #         # -- periodic save -------------------------------------------------
     #         if !isnothing(p.save_each) && state.itraj % p.save_each == 0
@@ -182,8 +181,8 @@ module Runner
     #         save_config!(state, p, lg)
     #     end
 
-    #     log_tag(lg, TAG_HMC, "production complete  (itraj = %i)", state.itraj)
-    # end
+         log_tag(lg, TAG_HMC, "production complete  (itraj = %i)", state.itraj)
+     end
 
 
     # # """

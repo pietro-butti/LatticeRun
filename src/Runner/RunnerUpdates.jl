@@ -28,7 +28,6 @@ Run one HMC trajectory, update `state.itraj`, and log the result.
 """
 function run_update!(::HMCUpdate, state::SimState, p::SimParams, lg::SimLogger)
     dh, acc = HMC!(state.U, state.intsch, state.lp, state.gp, state.ymws)
-    state.itraj += 1
     plq = plaquette(state.U, state.lp, state.gp, state.ymws)
     log_conf(lg, TAG_HMC, state.itraj,
         "ΔH = %+.6e  [acc %i]  Plaq = %.10f", dh, acc, plq)
@@ -92,6 +91,7 @@ function mc_sweep!(state::SimState, schedule::MCSchedule,
         for _ in 1:n
             run_update!(alg, state, p, lg)
         end
+	state.itraj += 1
     end
 end
 
