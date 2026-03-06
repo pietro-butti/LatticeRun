@@ -36,6 +36,7 @@ function run_measurement!(::FlowMeasurement, state::SimState,
                            p::SimParams, lg::SimLogger)
     state.U_cpu .= Array(state.U)   # snapshot before flowing
 
+    log_tag(lg, TAG_FLOW, "kernel t Eplq t2Eplq Eclv t2Eclv qtop qrec")
     for (label, wflw) in state.flow_kernels
         copyto!(state.U, state.U_cpu)   # fresh start for each kernel
 
@@ -58,7 +59,7 @@ function _log_flow_row(state::SimState, p::SimParams, lg::SimLogger,
     qtop = Qtop(state.U, state.gp, state.lp, state.ymws)
     qrec = Qtop_rect(state.U, state.gp, state.lp, state.ymws)
     log_conf(lg, TAG_FLOW, state.itraj,
-        "kernel=%-7s  t=%.6f  Eplq=%.8e  t2Eplq=%.8e  Eclv=%.8e  t2Eclv=%.8e  qtop=%+.6f  qrec=%+.6f",
+        "[%-7s]  %.6f  %14.13e %14.13e %14.13e %14.13e %14.13e %14.13e",
         label, ft, Eplq, ft^2*Eplq, Eclv, ft^2*Eclv, qtop, qrec)
 end
 
