@@ -10,3 +10,7 @@ Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 LatticeGPU = "958c3683-801a-4582-9cfa-2d6e2ae1763b"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
+
+[compat]
+BDIO = "0.1.0"
+LatticeGPU = "0.2.0"

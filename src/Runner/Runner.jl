@@ -33,9 +33,6 @@ module Runner
     using ..Parameters
     using ..Logger
 
-    # include("RunnerUpdates.jl")
-    # include("RunnerMeasurements.jl")
-
     # ==============================================================================
     #  SIMULATION STATE
     # ==============================================================================
@@ -60,6 +57,8 @@ module Runner
         itraj        :: Int
     end
 
+    include("RunnerUpdates.jl")
+    include("RunnerMeasurements.jl")
 
 
     """
