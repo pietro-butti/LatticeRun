@@ -99,7 +99,7 @@ module Runner
         end
 
         # --- gauge field initialisation --------------------------------------- 
-	itraj = init_gauge_field!(U, p, lp, gp, ymws, lg)
+        itraj = init_gauge_field!(U, p, lp, gp, ymws, lg)
 	
         plq = plaquette(U, lp, gp, ymws)
         log_tag(lg, TAG_INIT, "initial plaquette = %.16e", plq / 2)
@@ -108,8 +108,6 @@ module Runner
 
         return SimState(U, lp, gp, ymws, intsch, flow_kernels, U_cpu, itraj)
     end
-
-
 
     function init_gauge_field!(U, p::SimParams, lp, gp, ymws, lg::SimLogger)
         
@@ -130,45 +128,68 @@ module Runner
     end
 
 
-    # """
-    #     save_config!(state, p, lg)
+    """
+    thermalize!(state, schedule, p, lg)
 
-    # Save the current gauge configuration to `p.save_to` and log the event.
-    # """
-    # function save_config!(state::SimState, p::SimParams, lg::SimLogger)
-    #     isnothing(p.save_to) && return   # nowhere to save
+    Run `p.ntherm` MC sweeps to thermalise the gauge field.
+    No measurements are performed; `state.itraj` advances normally so the
+    trajectory counter is continuous going into production.
+    """
+    function thermalize!(state::SimState, schedule::MCSchedule,
+                        p::SimParams, lg::SimLogger)
+        isnothing(p.ntherm) || p.ntherm == 0 && return
 
-    #     fname = joinpath(p.save_to,
-    #                     "$(p.ens_name).cfg_n$(lpad(state.itraj, 6, '0'))")
-    #     save_cnfg(fname, state.U, state.lp, state.gp)
-    #     log_conf(lg, TAG_IO, state.itraj, "configuration saved → %s", fname)
-    # end
+        log_tag(lg, TAG_THERM, "starting thermalization (%i trajectories)", p.ntherm)
+
+        for _ in 1:p.ntherm
+            mc_sweep!(state, schedule, p, lg)
+        end
+
+        log_tag(lg, TAG_THERM, "thermalization complete  (itraj = %i)", state.itraj)
+    end
 
 
-     """
-         produce!(state, schedule, measurements, p, lg)
 
-     Run `p.ntraj` production MC sweeps.
+    """
+        save_config!(state, p, lg)
 
-     After each sweep:
-     - measurements are run if `state.itraj % p.flow_each == 0`
-     - the configuration is saved if `state.itraj % p.save_each == 0`
+    Save the current gauge configuration to `p.save_to` and log the event.
+    """
+    function save_config!(state::SimState, p::SimParams, lg::SimLogger)
+        isnothing(p.save_to) && return   # nowhere to save
 
-     If `p.save_final` is true the last configuration is always saved, regardless of `save_each`.
-     """
-     function run!(state::SimState, schedule::MCSchedule,
-                     measurements::Vector{<:Measurement},
-                     p::SimParams, lg::SimLogger)
+        fname = joinpath(p.save_to,
+            "$(p.ens_name).cfg_n$(state.itraj)")
 
-         log_tag(lg, TAG_HMC, "starting production (%i trajectories)", p.ntraj)
+        save_cnfg(fname, state.U, state.lp, state.gp)
+        log_conf(lg, TAG_IO, state.itraj, "configuration saved → %s", fname)
+    end
 
-         for _ in 1:p.ntraj
-             mc_sweep!(state, schedule, p, lg)
 
-             # -- measurements --------------------------------------------------
-             if !isnothing(p.flow_each) && state.itraj % p.flow_each == 0
-                 run_measurements!(state, measurements, p, lg)
-             end
+    """
+        run!(state, schedule, measurements, p, lg)
+
+    Run `p.ntraj` production MC sweeps.
+
+    After each sweep:
+    - measurements are run if `state.itraj % p.flow_each == 0`
+    - the configuration is saved if `state.itraj % p.save_each == 0`
+
+    If `p.save_final` is true the last configuration is always saved, regardless of `save_each`.
+    """
+    function run!(state::SimState, schedule::MCSchedule,
+                    measurements::Vector{<:Measurement},
+                    p::SimParams, lg::SimLogger)
+
+        log_tag(lg, TAG_HMC, "starting production (%i trajectories)", p.ntraj)
+
+        for _ in 1:p.ntraj
+            mc_sweep!(state, schedule, p, lg)
+
+            # -- measurements --------------------------------------------------
+            if !isnothing(p.flow_each) && state.itraj % p.flow_each == 0
+                run_measurements!(state, measurements, p, lg)
+            end
 
             # -- periodic save -------------------------------------------------
             if !isnothing(p.save_each) && state.itraj % p.save_each == 0
@@ -181,31 +202,8 @@ module Runner
             save_config!(state, p, lg)
         end
 
-         log_tag(lg, TAG_HMC, "production complete  (itraj = %i)", state.itraj)
-     end
-
-
-    # # """
-    # #     run_simulation!(p, lg;
-    # #                     schedule     = MCSchedule([(HMCUpdate(), 1)]),
-    # #                     measurements = Measurement[FlowMeasurement()])
-
-    # # Run a complete simulation (setup → thermalisation → production).
-
-    # # The defaults give a single HMC step per trajectory with gradient-flow
-    # # measurements.  Override either keyword to change the update strategy or
-    # # the set of observables without touching this function.
-    # # """
-    # # function run_simulation!(p::SimParams, lg::SimLogger;
-    # #     schedule     :: MCSchedule           = MCSchedule([(HMCUpdate(), 1)]),
-    # #     measurements :: Vector{<:Measurement} = Measurement[FlowMeasurement()],
-    # # )
-    # #     state = setup_simulation(p, lg)
-    # #     thermalize!(state, schedule, p, lg)
-    # #     produce!(state, schedule, measurements, p, lg)
-    # #     return state
-    # # end
-
+        log_tag(lg, TAG_HMC, "production complete  (itraj = %i)", state.itraj)
+    end
 
 
     export SimState, setup_simulation, init_gauge_field!, save_config!, run!

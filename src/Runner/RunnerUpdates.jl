@@ -91,31 +91,8 @@ function mc_sweep!(state::SimState, schedule::MCSchedule,
         for _ in 1:n
             run_update!(alg, state, p, lg)
         end
-	state.itraj += 1
+        state.itraj += 1
     end
 end
 
 
-# ==============================================================================
-#  THERMALIZATION
-# ==============================================================================
-
-"""
-    thermalize!(state, schedule, p, lg)
-
-Run `p.ntherm` MC sweeps to thermalise the gauge field.
-No measurements are performed; `state.itraj` advances normally so the
-trajectory counter is continuous going into production.
-"""
-function thermalize!(state::SimState, schedule::MCSchedule,
-                    p::SimParams, lg::SimLogger)
-    isnothing(p.ntherm) || p.ntherm == 0 && return
-
-    log_tag(lg, TAG_THERM, "starting thermalization (%i trajectories)", p.ntherm)
-
-    for _ in 1:p.ntherm
-        mc_sweep!(state, schedule, p, lg)
-    end
-
-    log_tag(lg, TAG_THERM, "thermalization complete  (itraj = %i)", state.itraj)
-end
