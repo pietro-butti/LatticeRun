@@ -52,6 +52,7 @@ module Parameters
         Tflow     :: Union{Float64,      Nothing}
         epsilon   :: Union{Float64,      Nothing}
         nflow     :: Union{Int,          Nothing}
+        flow_file :: Union{String,       Nothing} # nothing → use log/redirect; path → write CSV
     end
 
 
@@ -88,7 +89,7 @@ module Parameters
             p["beta"],     p["c0"],
             p["start_from"], p["save_each"], p["save_final"], p["save_to"], p["logfile"],
             p["ntherm"],   p["ntraj"],   p["delta"],  p["nleaps"],
-            p["flow_each"], p["flow_type"], p["adaptive"], p["Tflow"], p["epsilon"], p["nflow"],
+            p["flow_each"], p["flow_type"], p["adaptive"], p["Tflow"], p["epsilon"], p["nflow"],p["flow_file"]
         )
     end
 
@@ -175,6 +176,7 @@ module Parameters
             "Tflow"     => _opt(flw, "Tflow",     nothing),
             "epsilon"   => _opt(flw, "epsilon",   nothing),
             "nflow"     => _opt(flw, "nflow",     nothing),
+            "flow_file"   => _opt_string(flw, "flow_file", nothing),
         )
 
         return SimParams(d)
@@ -327,6 +329,12 @@ module Parameters
                 p!("#   Mode             :  fixed step")
             end
         end
+        if !isnothing(p.flow_file)
+            p!("#   CSV output :  $(p.flow_file)")
+        else
+            p!("#   CSV output :  [disabled, using log]")
+        end
+
 
         # --- I/O --------------------------------------------------------------
         p!(line)
@@ -338,6 +346,7 @@ module Parameters
         p!("#   Save every       :  $(_fmt(p.save_each)) trajectories")
         p!("#   Save final       :  $(_bool(p.save_final))")
         p!("#   Log file         :  $(isnothing(p.logfile) ? "stdout only" : p.logfile)")
+
 
         p!(thick)
 

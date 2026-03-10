@@ -29,29 +29,89 @@ struct FlowMeasurement <: Measurement end
 """
     run_measurement!(::FlowMeasurement, state, p, lg)
 
-Stash `state.U`, run each requested flow kernel, emit data through
-`TAG_FLOW`, then restore the unflowed configuration.
+Stash `state.U`, run each requested flow kernel, emit data, then restore
+the unflowed configuration.
+
+If `p.flow_file` is set, one conf's rows are collected into a local buffer,
+flushed to CSV in a single call, then dropped — nothing accumulates in
+memory across configurations. The main log receives a one-line stub only.
+
+If `p.flow_file` is nothing, the existing log/redirect behaviour is used.
 """
 function run_measurement!(::FlowMeasurement, state::SimState,
                            p::SimParams, lg::SimLogger)
     state.U_cpu .= Array(state.U)   # snapshot before flowing
 
+    rows = NamedTuple[]
+
     log_tag(lg, TAG_FLOW, "kernel t Eplq t2Eplq Eclv t2Eclv qtop qrec")
     for (label, wflw) in state.flow_kernels
         copyto!(state.U, state.U_cpu)   # fresh start for each kernel
 
-        # t = 0
-        _log_flow_row(state, p, lg, label, 0.0)
+        # t = 0 -------------
+        if isnothing(p.flow_file)
+            _log_flow_row(state, p, lg, label, 0.0)
+        else
+            push!(rows, _flow_row_nt(state, p, label, 0.0))
+        end
 
+        # flow loop ----------
         for step in 1:p.nflow
             flw(state.U, wflw, 1, p.epsilon, state.gp, state.lp, state.ymws)
-            _log_flow_row(state, p, lg, label, step * p.epsilon)
+
+            if isnothing(p.flow_file)
+                _log_flow_row(state, p, lg, label, step * p.epsilon)
+            else
+                push!(rows, _flow_row_nt(state, p, label, step * p.epsilon))
+            end
         end
+
+        # data flush ----------
+        if !isnothing(p.flow_file)
+            _append_flow_csv(rows, p.flow_file)
+            log_conf(lg, TAG_FLOW, state.itraj, "flow appended → %s  (%i rows)",
+                    p.flow_file, length(rows))    
+        end
+
     end
 
     copyto!(state.U, state.U_cpu)   # restore for HMC to continue
 end
 
+
+
+
+# ------------------------------------------------------------------------------
+# Internal helpers
+# ------------------------------------------------------------------------------
+
+# Compute all observables at the current flow time and pack into a NamedTuple.
+function _flow_row_nt(state::SimState, p::SimParams, label::String, ft::Float64)
+    Eplq = Eoft_plaq(state.U, state.gp, state.lp, state.ymws)
+    Eclv = Eoft_clover(state.U, state.gp, state.lp, state.ymws)
+    qtop = Qtop(state.U, state.gp, state.lp, state.ymws)
+    qrec = Qtop_rect(state.U, state.gp, state.lp, state.ymws)
+    return (conf   = state.itraj,
+            kernel = label,
+            t      = ft,
+            Eplq   = Eplq,   t2Eplq = ft^2 * Eplq,
+            Eclv   = Eclv,   t2Eclv = ft^2 * Eclv,
+            qtop   = qtop,
+            qrec   = qrec)
+end
+
+# Append all rows for one conf to the CSV file.
+# Writes the header automatically on the very first call (empty or absent file).
+function _append_flow_csv(rows, path::String)
+    first_write = !isfile(path) || iszero(filesize(path))
+    if first_write
+        CSV.write(path, rows)
+    else
+        CSV.write(path, rows; append = true)
+    end
+end
+
+# Compute all observables and emit a formatted line to the log / redirect file.
 function _log_flow_row(state::SimState, p::SimParams, lg::SimLogger,
                         label::String, ft::Float64)
     Eplq = Eoft_plaq(state.U, state.gp, state.lp, state.ymws)

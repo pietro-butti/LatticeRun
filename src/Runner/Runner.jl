@@ -29,7 +29,7 @@
 ## =============================================================================
 
 module Runner
-    using CUDA, LatticeGPU
+    using CUDA, LatticeGPU, CSV
     using ..Parameters
     using ..Logger
 
