@@ -118,7 +118,7 @@ module Runner
             U .= exp.(ymws.mom)
             log_tag(lg, TAG_INIT, "Hot start: gauge field set to unit configuration")
         elseif isfile(p.start_from)
-            U .= LatticeGPU.read_cnfg(U; block=p.Lx)
+            U .= LatticeGPU.read_cnfg(p.start_from; block=p.Lx)
             log_tag(lg, TAG_INIT, "Loading explicit starting config: %s",p.start_from)
         else
             error("Starting configuration not find. Select `cold`, `hot` or `<filename>`")
