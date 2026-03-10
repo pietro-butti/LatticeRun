@@ -160,7 +160,7 @@ module Parameters
 
             "start_from" => _opt_string(hmc, "start_from", nothing),
             "save_each"  => _opt(io,  "save_each",  nothing),
-            "save_final" => io["save_final"],
+            "save_final" => _opt(io,"save_final", false),
             "logfile"    => _opt_string(io, "logfile", nothing),
             "save_to"    => _opt_string(io, "save_to", nothing),
 
@@ -202,6 +202,14 @@ module Parameters
 
         # --- action ---
         p.beta > 0 || throw(ArgumentError("beta must be positive"))
+
+        # --- I/O ---
+        if p.save_final || !isnothing(p.save_each)
+            !isnothing(p.save_to) || throw(ArgumentError(
+                "If either `save_each` or `save_final` is specified," *
+                " `save_to` must be specified too "
+            ))
+        end
 
         # --- HMC: all four fields are required together -----------------------
         hmc_fields = (:ntherm, :ntraj, :delta, :nleaps)

@@ -155,7 +155,7 @@ module Runner
     Save the current gauge configuration to `p.save_to` and log the event.
     """
     function save_config!(state::SimState, p::SimParams, lg::SimLogger)
-        isnothing(p.save_to) && return   # nowhere to save
+        isnothing(p.save_to) && error("p.save_to has not been set")
 
         fname = joinpath(p.save_to,
             "$(p.ens_name).cfg_n$(state.itraj)")
