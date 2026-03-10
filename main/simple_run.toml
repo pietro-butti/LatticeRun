@@ -1,0 +1,32 @@
+[run]
+device   = 0        # GPU device number 
+ens_name = "B2L12"
+
+[geometry]
+L  = [12,12,12,12]
+Lx = [4,4,4,4]
+
+[action]
+beta = 6.2
+c0   = 1.0
+
+[io]
+start_from = "./prova.cfg_n50"        # leave empty for auto-detect / cold start
+save_to    = "./" 
+save_final = true
+# save_each  = 10
+logfile    = ""    # leave empty for stdout only
+
+[hmc]
+ntherm     = 200
+ntraj      = 1000
+delta      = 0.1
+nleaps     = 10
+
+[flow]
+flow_type = ["wilson"]  # set "" NO FLOW. set to ["wilson","zeuthen"]  for multiple on the same conf
+flow_each = 5
+adaptive  = false
+Tflow     = -1.0
+epsilon   = 0.01
+nflow     = 100
