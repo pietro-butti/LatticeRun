@@ -330,9 +330,9 @@ module Parameters
             end
         end
         if !isnothing(p.flow_file)
-            p!("#   CSV output :  $(p.flow_file)")
+            p!("#   CSV output           :  $(p.flow_file)")
         else
-            p!("#   CSV output :  [disabled, using log]")
+            p!("#   CSV output           :  [disabled, using log]")
         end
 
 

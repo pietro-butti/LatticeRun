@@ -30,3 +30,4 @@ adaptive  = false
 Tflow     = -1.0
 epsilon   = 0.01
 nflow     = 100
+flow_file = "prova.csv"
