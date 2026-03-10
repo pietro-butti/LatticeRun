@@ -158,7 +158,7 @@ module Parameters
             "beta" => act["beta"],
             "c0"   => act["c0"],
 
-            "start_from" => _opt_string(hmc, "start_from", nothing),
+            "start_from" => _opt_string(io, "start_from", nothing),
             "save_each"  => _opt(io,  "save_each",  nothing),
             "save_final" => _opt(io,"save_final", false),
             "logfile"    => _opt_string(io, "logfile", nothing),
