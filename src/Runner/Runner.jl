@@ -75,16 +75,19 @@ module Runner
     Returns a `SimState` ready to be passed to `thermalize!` / `produce!`.
     """
     function setup_simulation(p::SimParams, lg::SimLogger)#::SimState
-        # device!(p.device)  ############### CUDA ###############
-        log_tag(lg, TAG_INIT, "CUDA device %i selected", p.device)
+        # --- select device ----------------------------------------------------
+        if !isnothing(p.device)
+            device!(p.device) 
+            log_tag(lg, TAG_INIT, "CUDA device %i selected", p.device)
+        end
+
 
         # --- lattice and gauge objects ----------------------------------------
         lp    = SpaceParm{4}(p.L, p.Lx, BC_PERIODIC, (0,0,0,0,0,0))
         gp    = GaugeParm{Float64}(SU3{Float64}, p.beta, p.c0,
                                 (1.0,1.0), (0.0,0.0), lp.iL)
-        ymws  = YMworkspace(SU3, Float64, lp) ############### CUDA ###############
-        U     = vector_field(SU3{Float64}, lp) ############### CUDA ###############
-
+        ymws  = YMworkspace(SU3, Float64, lp)
+        U     = vector_field(SU3{Float64}, lp)
         # --- integrator -------------------------------------------------------
         intsch = omf4(Float64, p.delta, p.nleaps)
 

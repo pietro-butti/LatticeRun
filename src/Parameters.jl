@@ -21,7 +21,7 @@ module Parameters
     """
     struct SimParams
         # --- Run specifics ---
-        device   :: Int
+        device   :: Union{Int, Nothing}
         ens_name :: String
 
         # --- geometry ---
@@ -46,13 +46,13 @@ module Parameters
         nleaps :: Union{Int,     Nothing}
 
         # --- gradient flow ---
-        flow_each :: Union{Int,          Nothing}
+        flow_each :: Union{Int,            Nothing}
         flow_type :: Union{Vector{String}, Nothing}   # nothing → no flow
-        adaptive  :: Union{Bool,         Nothing}
-        Tflow     :: Union{Float64,      Nothing}
-        epsilon   :: Union{Float64,      Nothing}
-        nflow     :: Union{Int,          Nothing}
-        flow_file :: Union{String,       Nothing} # nothing → use log/redirect; path → write CSV
+        adaptive  :: Union{Bool,           Nothing}
+        Tflow     :: Union{Float64,        Nothing}
+        epsilon   :: Union{Float64,        Nothing}
+        nflow     :: Union{Int,            Nothing}
+        flow_file :: Union{String,         Nothing} # nothing → use log/redirect; path → write CSV
     end
 
 
@@ -150,7 +150,7 @@ module Parameters
         flw  = get(raw, "flow",     Dict())
 
         d = Dict(
-            "device"   => run["device"],
+            "device"   => _opt(run, "device", nothing),
             "ens_name" => run["ens_name"],
 
             "L"  => geo["L"],
@@ -286,7 +286,7 @@ module Parameters
         p!(thick)
         p!("#")
         p!("#   Ensemble : $(p.ens_name)")
-        p!("#   Device   : GPU $(p.device)")
+        p!("#   Device   : GPU $(p.device) " * isnothing(p.device) ?  "[default]" : "[selected]")
         p!("#")
         p!(thick)
 
