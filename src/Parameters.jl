@@ -286,7 +286,7 @@ module Parameters
         p!(thick)
         p!("#")
         p!("#   Ensemble : $(p.ens_name)")
-        p!("#   Device   : GPU $(p.device) " * isnothing(p.device) ?  "[default]" : "[selected]")
+        p!("#   Device   : GPU $(p.device) " * (isnothing(p.device) ?  "[default]" : "[selected]"))
         p!("#")
         p!(thick)
 
