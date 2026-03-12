@@ -207,7 +207,8 @@ Then update p_dict with the CLI value.
 function apply_overrides!(p_dict::Dict{String, Any}, args::Dict)
     for (raw_key, cli_val) in args
         raw_key == "input" && continue   # not a SimParams field
-        isnothing(cli_val) && continue   # not provided on CLI
+        isnothing(cli_val) && continue              # not provided on CLI
+        cli_val isa Vector && isempty(cli_val) && continue   # nargs='+' default
 
         # L and Lx keep their original capitalisation as Dict keys.
         # Everything else: hyphens -> underscores, then remap if needed.
