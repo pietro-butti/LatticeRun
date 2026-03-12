@@ -1,33 +1,71 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# [run]  — required
+# ──────────────────────────────────────────────────────────────────────────────
 [run]
-device   = 0        # GPU device number 
-ens_name = "B2L12"
+device   = 0           # CUDA device index (0-based)
+ens_name = "B6.2_L16"  # ensemble label; used in all output filenames
 
+
+# ──────────────────────────────────────────────────────────────────────────────
+# [geometry]  — required
+# ──────────────────────────────────────────────────────────────────────────────
 [geometry]
-L  = [12,12,12,12]
-Lx = [4,4,4,4]
+L  = [16, 16, 16, 16]  # full lattice extents; a scalar broadcasts (e.g. L = 16)
+Lx = [8,  8,  8,  8]   # sub-lattice extents for domain decomposition; must divide L
 
+
+# ──────────────────────────────────────────────────────────────────────────────
+# [action]  — required
+# ──────────────────────────────────────────────────────────────────────────────
 [action]
-beta = 6.2
-c0   = 1.0
+beta = 6.2   # inverse coupling β
+c0   = 1.0   # Symanzik coefficient (1.0 = Wilson plaquette action)
 
-[io]
-start_from = "./prova.cfg_n50"        # leave empty for auto-detect / cold start
-save_to    = "./" 
-save_final = true
-# save_each  = 10
-logfile    = ""    # leave empty for stdout only
 
+# ──────────────────────────────────────────────────────────────────────────────
+# [hmc]  — optional; all four fields (ntherm/ntraj/delta/nleaps) must be
+#          present together or all absent
+# ──────────────────────────────────────────────────────────────────────────────
 [hmc]
-ntherm     = 200
-ntraj      = 1000
-delta      = 0.1
-nleaps     = 10
+ntherm     = 200   # thermalization trajectories (no measurements performed)
+ntraj      = 1000  # production trajectories
+delta      = 0.1   # leapfrog step size δ
+nleaps     = 10    # number of leapfrog steps per trajectory
 
+# Where to start:
+#   leave empty or "cold" → cold start (unit matrices)
+#   "hot"                 → random start
+#   "/path/to/file"       → load configuration from file
+start_from = ""
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# [io]  — optional
+# ──────────────────────────────────────────────────────────────────────────────
+[io]
+save_to    = "./"   # directory for saved configurations; required if save_each
+                    # or save_final is set
+save_final = true   # always save the last configuration
+# save_each = 10    # also save every N trajectories (comment out to disable)
+logfile    = ""     # path to log file; leave empty for stdout only
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# [flow]  — optional; flow_each/flow_type/epsilon/nflow must all be set together
+# ──────────────────────────────────────────────────────────────────────────────
 [flow]
-flow_type = ["wilson"]  # set "" NO FLOW. set to ["wilson","zeuthen"]  for multiple on the same conf
-flow_each = 5
-adaptive  = false
-Tflow     = -1.0
-epsilon   = 0.01
-nflow     = 100
-flow_file = "prova.csv"
+flow_each = 5                     # measure every N production trajectories
+
+# Kernels to apply: "wilson", "zeuthen", or both.
+# Both kernels are run independently on the same unflowed configuration.
+flow_type = ["wilson", "zeuthen"]
+
+adaptive  = false   # true → adaptive step (requires Tflow); false → fixed step
+# Tflow   = 2.0     # maximum flow time; only used when adaptive = true
+epsilon   = 0.01    # flow step size ε
+nflow     = 100     # number of flow steps (total flow time = nflow × epsilon)
+
+# Optional CSV output. When set, each configuration's rows are appended to
+# this file in a single write. When absent, flow data goes through the logger
+# (main log or a redirect file set via SimLogger redirects).
+# flow_file = "B6.2_L16_flow.csv"
