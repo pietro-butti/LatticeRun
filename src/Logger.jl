@@ -250,5 +250,5 @@ module Logger
     end
 
     export TAG_INIT, TAG_IO, TAG_THERM, TAG_HMC, TAG_FLOW
-    export SimLogger, log_banner!, log_tag, log_conf, close_logger
+    export SimLogger, log_banner!, log_tag, log_conf, log_line, close_logger
 end
