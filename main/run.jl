@@ -26,6 +26,7 @@
 
 using ArgParse
 using LatticeRun
+using TimerOutputs
 
 
 # ------------------------------------------------------------------------------
@@ -279,6 +280,8 @@ function main()
 
     thermalize!(state, schedule, p, lg)
     run!(state, schedule, meas, p, lg)
+
+    log_line(lg, sprint(print_timer))
 
     close_logger(lg)
 end
