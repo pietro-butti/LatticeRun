@@ -55,13 +55,14 @@ module Parameters
         nleaps :: Union{Int,     Nothing}
 
         # --- gradient flow ---
-        flow_each :: Union{Int,            Nothing}
-        flow_type :: Union{Vector{String}, Nothing}   # nothing → no flow
-        adaptive  :: Union{Bool,           Nothing}
-        Tflow     :: Union{Float64,        Nothing}
-        epsilon   :: Union{Float64,        Nothing}
-        nflow     :: Union{Int,            Nothing}
-        flow_file :: Union{String,         Nothing} # nothing → use log/redirect; path → write CSV
+        flow_each  :: Union{Int,            Nothing}
+        flow_type  :: Union{Vector{String}, Nothing}   # nothing → no flow
+        adaptive   :: Union{Bool,           Nothing}
+        Tflow      :: Union{Float64,        Nothing}
+        epsilon    :: Union{Float64,        Nothing}
+        nflow      :: Union{Int,            Nothing}
+        flow_times :: Union{Vector{Float64},Nothing}   # explicit measurement times (adaptive mode)
+        flow_file  :: Union{String,         Nothing} # nothing → use log/redirect; path → write CSV
     end
 
 
@@ -81,8 +82,8 @@ module Parameters
         end
     end
 
-    _opt(d, k, def)        = let v = get(d, k, def); (isnothing(v) || v == "") ? def : v end
-    _opt_string(d, k, def) = let v = get(d, k, def); (isnothing(v) || v == "") ? nothing : String(v) end
+    _opt(d, k, def)    = let v = get(d, k, def); (isnothing(v) || v == "") ? def : v end
+    _opt_string(d, k) = let v = get(d, k, nothing); (isnothing(v) || v == "") ? nothing : String(v) end
 
 
     # --------------------------------------------------------------------------
@@ -123,22 +124,23 @@ module Parameters
             "Lx"         => geo["Lx"],
             "beta"       => act["beta"],
             "c0"         => act["c0"],
-            "start_from" => _opt_string(io, "start_from", nothing),
+            "start_from" => _opt_string(io, "start_from"),
             "save_each"  => _opt(io,  "save_each",  nothing),
             "save_final" => _opt(io,  "save_final", false),
-            "logfile"    => _opt_string(io, "logfile",  nothing),
-            "save_to"    => _opt_string(io, "save_to",  nothing),
+            "logfile"    => _opt_string(io, "logfile"),
+            "save_to"    => _opt_string(io, "save_to"),
             "ntherm"     => _opt(hmc, "ntherm", nothing),
             "ntraj"      => _opt(hmc, "ntraj",  nothing),
             "delta"      => _opt(hmc, "delta",  nothing),
             "nleaps"     => _opt(hmc, "nleaps", nothing),
-            "flow_type"  => _opt(flw, "flow_type", nothing),
-            "flow_each"  => _opt(flw, "flow_each", nothing),
-            "adaptive"   => _opt(flw, "adaptive",  nothing),
-            "Tflow"      => _opt(flw, "Tflow",     nothing),
-            "epsilon"    => _opt(flw, "epsilon",   nothing),
-            "nflow"      => _opt(flw, "nflow",     nothing),
-            "flow_file"  => _opt_string(flw, "flow_file", nothing),
+            "flow_type"  => _opt(flw, "flow_type",  nothing),
+            "flow_each"  => _opt(flw, "flow_each",  nothing),
+            "adaptive"   => _opt(flw, "adaptive",   nothing),
+            "Tflow"      => _opt(flw, "Tflow",      nothing),
+            "epsilon"    => _opt(flw, "epsilon",    nothing),
+            "nflow"      => _opt(flw, "nflow",      nothing),
+            "flow_times" => _opt(flw, "flow_times", nothing),
+            "flow_file"  => _opt_string(flw, "flow_file"),
         )
     end
 
@@ -160,7 +162,8 @@ module Parameters
             p["beta"],     p["c0"],
             p["start_from"], p["save_each"], p["save_final"], p["save_to"], p["logfile"],
             p["ntherm"],   p["ntraj"],   p["delta"],  p["nleaps"],
-            p["flow_each"], p["flow_type"], p["adaptive"], p["Tflow"], p["epsilon"], p["nflow"],p["flow_file"]
+            p["flow_each"], p["flow_type"], p["adaptive"], p["Tflow"], p["epsilon"], p["nflow"],
+            p["flow_times"], p["flow_file"]
         )
     end
 
@@ -232,6 +235,14 @@ module Parameters
                         "Unknown flow_type \"$ft\". Valid choices: wilson, zeuthen."
                     ))
             end
+            if !isnothing(p.adaptive) && p.adaptive
+                !isnothing(p.flow_times) ||
+                    throw(ArgumentError(
+                        "adaptive = true requires flow_times to be set"
+                    ))
+                issorted(p.flow_times) && p.flow_times[1] >= 0.0 ||
+                    throw(ArgumentError("flow_times must be non-negative and sorted"))
+            end
         end
 
         return nothing
@@ -288,7 +299,8 @@ module Parameters
             p!("#   Kernel(s)        :  $(join(p.flow_type, " + "))")
             p!("#   Step size  ϵ     :  $(p.epsilon)  ($(p.nflow) steps)")
             if !isnothing(p.adaptive) && p.adaptive
-                p!("#   Mode             :  adaptive  (T_max = $(_fmt(p.Tflow)))")
+                ntimes = isnothing(p.flow_times) ? 0 : length(p.flow_times)
+                p!("#   Mode             :  adaptive  ($ntimes measurement times)")
             else
                 p!("#   Mode             :  fixed step")
             end

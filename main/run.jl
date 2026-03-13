@@ -107,7 +107,7 @@ function build_arg_table()
             default  = nothing
 
         "--start-from"
-            help     = "Starting config: empty/cold, hot, or a file path (overrides [hmc] start_from)"
+            help     = "Starting config: empty/cold, hot, or a file path (overrides [io] start_from)"
             arg_type = String
             default  = nothing
 

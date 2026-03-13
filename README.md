@@ -212,8 +212,8 @@ Fields in the same group must be set together — `validate` will catch partial 
 | | `ntraj` | `Int?` | |
 | | `delta` | `Float64?` | |
 | | `nleaps` | `Int?` | |
-| | `start_from` | `String?` | `"cold"`, `"hot"`, or filepath |
-| `[io]` | `save_each` | `Int?` | `nothing` = never save periodically |
+| `[io]` | `start_from` | `String?` | `"cold"`, `"hot"`, or filepath |
+| | `save_each` | `Int?` | `nothing` = never save periodically |
 | | `save_final` | `Bool` | |
 | | `save_to` | `String?` | Required if any saving is enabled |
 | | `logfile` | `String?` | `nothing` = stdout only |

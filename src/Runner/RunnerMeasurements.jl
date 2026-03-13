@@ -32,6 +32,14 @@ struct FlowMeasurement <: Measurement end
 Stash `state.U`, run each requested flow kernel, emit data, then restore
 the unflowed configuration.
 
+**Fixed-step mode** (`p.adaptive` is false or nothing): runs `p.nflow` steps of
+size `p.epsilon`, measuring at each step.
+
+**Adaptive mode** (`p.adaptive == true`): flows to each time in `p.flow_times`
+in order.  Between consecutive times `t` and `tfl[k]`, a single fixed step is
+taken when `tfl[k] - t ≈ wflw.eps`; otherwise `flw_adapt` is used to reach
+`tfl[k]` exactly.  Measurements are emitted at every time in `p.flow_times`.
+
 If `p.flow_file` is set, one conf's rows are collected into a local buffer,
 flushed to CSV in a single call, then dropped — nothing accumulates in
 memory across configurations. The main log receives a one-line stub only.
@@ -42,27 +50,63 @@ function run_measurement!(::FlowMeasurement, state::SimState,
                            p::SimParams, lg::SimLogger)
     state.U_cpu .= Array(state.U)   # snapshot before flowing
 
-    rows = NamedTuple[]
-
     log_tag(lg, TAG_FLOW, "kernel t Eplq t2Eplq Eclv t2Eclv qtop qrec")
     for (label, wflw) in state.flow_kernels
         copyto!(state.U, state.U_cpu)   # fresh start for each kernel
 
-        # t = 0 -------------
-        if isnothing(p.flow_file)
-            _log_flow_row(state, p, lg, label, 0.0)
-        else
-            push!(rows, _flow_row_nt(state, p, label, 0.0))
-        end
+        rows = NamedTuple[]
 
-        # flow loop ----------
-        for step in 1:p.nflow
-            flw(state.U, wflw, 1, p.epsilon, state.gp, state.lp, state.ymws)
+        if !isnothing(p.adaptive) && p.adaptive
+            # ------------------------------------------------------------------
+            # Adaptive mode: step to each time in p.flow_times
+            # ------------------------------------------------------------------
+            tfl = p.flow_times
+            t   = 0.0
 
+            # measure at t = tfl[1] (typically 0)
             if isnothing(p.flow_file)
-                _log_flow_row(state, p, lg, label, step * p.epsilon)
+                _log_flow_row(state, p, lg, label, t)
             else
-                push!(rows, _flow_row_nt(state, p, label, step * p.epsilon))
+                push!(rows, _flow_row_nt(state, p, label, t))
+            end
+
+            for k in axes(tfl, 1)[2:end]
+                dt = tfl[k] - t
+                if isapprox(dt, wflw.eps)
+                    flw(state.U, wflw, 1, state.gp, state.lp, state.ymws)
+                else
+                    flw_adapt(state.U, wflw, dt, state.gp, state.lp, state.ymws)
+                end
+
+                if isnothing(p.flow_file)
+                    _log_flow_row(state, p, lg, label, tfl[k])
+                else
+                    push!(rows, _flow_row_nt(state, p, label, tfl[k]))
+                end
+
+                t = tfl[k]
+            end
+
+        else
+            # ------------------------------------------------------------------
+            # Fixed-step mode: p.nflow steps of p.epsilon
+            # ------------------------------------------------------------------
+
+            # t = 0 -------------
+            if isnothing(p.flow_file)
+                _log_flow_row(state, p, lg, label, 0.0)
+            else
+                push!(rows, _flow_row_nt(state, p, label, 0.0))
+            end
+
+            for step in 1:p.nflow
+                flw(state.U, wflw, 1, p.epsilon, state.gp, state.lp, state.ymws)
+
+                if isnothing(p.flow_file)
+                    _log_flow_row(state, p, lg, label, step * p.epsilon)
+                else
+                    push!(rows, _flow_row_nt(state, p, label, step * p.epsilon))
+                end
             end
         end
 
@@ -70,7 +114,7 @@ function run_measurement!(::FlowMeasurement, state::SimState,
         if !isnothing(p.flow_file)
             _append_flow_csv(rows, p.flow_file)
             log_conf(lg, TAG_FLOW, state.itraj, "flow appended → %s  (%i rows)",
-                    p.flow_file, length(rows))    
+                    p.flow_file, length(rows))
         end
 
     end

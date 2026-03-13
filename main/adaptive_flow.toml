@@ -18,8 +18,8 @@ Lx = [8,  8,  8,  8]   # sub-lattice extents for domain decomposition; must divi
 # [action]  — required
 # ──────────────────────────────────────────────────────────────────────────────
 [action]
-beta = 6.2   # inverse coupling β
-c0   = 1.0   # Symanzik coefficient (1.0 = Wilson plaquette action)
+beta = 6.2       # inverse coupling β
+c0   = 1.66666   # Symanzik coefficient (1.0 = Wilson plaquette action)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -44,7 +44,7 @@ nleaps     = 10    # number of leapfrog steps per trajectory
 start_from = ""
 save_to    = "./"   # directory for saved configurations; required if save_each
                     # or save_final is set
-save_final = true   # always save the last configuration
+save_final = false   # always save the last configuration
 # save_each = 10    # also save every N trajectories (comment out to disable)
 logfile    = ""     # path to log file; leave empty for stdout only
 
@@ -59,12 +59,24 @@ flow_each = 5                     # measure every N production trajectories
 # Both kernels are run independently on the same unflowed configuration.
 flow_type = ["wilson", "zeuthen"]
 
-adaptive  = false   # true → adaptive step (requires Tflow); false → fixed step
-# Tflow   = 2.0     # maximum flow time; only used when adaptive = true
-epsilon   = 0.01    # flow step size ε
-nflow     = 100     # number of flow steps (total flow time = nflow × epsilon)
+# Adaptive mode: step between consecutive flow_times using flw_adapt when the
+# interval does not match epsilon exactly, or a single fixed step otherwise.
+# flow_times defines the explicit measurement schedule — a non-uniform grid
+# (denser at small t, coarser at large t) is typical for scale-setting studies.
+adaptive   = true
+epsilon    = 0.01   # base step size ε (used for fixed steps and as the
+                    # integrator tolerance seed in flw_adapt)
+nflow      = 100    # only used in fixed-step mode (adaptive = false);
+                    # kept here because all flow fields must be set together
+flow_times = [
+    0.0,
+    0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5,
+    0.6,  0.7, 0.8,  0.9, 1.0,
+    1.25, 1.5, 1.75, 2.0,
+    2.5,  3.0, 3.5,  4.0, 5.0,
+]
 
 # Optional CSV output. When set, each configuration's rows are appended to
 # this file in a single write. When absent, flow data goes through the logger
 # (main log or a redirect file set via SimLogger redirects).
-# flow_file = "B6.2_L16_flow.csv"
+flow_file = "B6.2_L16_flow.csv"
