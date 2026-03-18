@@ -3,22 +3,22 @@
 # ──────────────────────────────────────────────────────────────────────────────
 [run]
 device   = 0           # CUDA device index (0-based)
-ens_name = "B6.2_L16"  # ensemble label; used in all output filenames
+ens_name = "SuperCoarse"  # ensemble label; used in all output filenames
 
 
 # ──────────────────────────────────────────────────────────────────────────────
 # [geometry]  — required
 # ──────────────────────────────────────────────────────────────────────────────
 [geometry]
-L  = [16, 16, 16, 16]  # full lattice extents; a scalar broadcasts (e.g. L = 16)
-Lx = [8,  8,  8,  8]   # sub-lattice extents for domain decomposition; must divide L
+L  = [12, 12, 12, 12]  # full lattice extents; a scalar broadcasts (e.g. L = 16)
+Lx = [4,  4,  4,  4]   # sub-lattice extents for domain decomposition; must divide L
 
 
 # ──────────────────────────────────────────────────────────────────────────────
 # [action]  — required
 # ──────────────────────────────────────────────────────────────────────────────
 [action]
-beta = 6.2       # inverse coupling β
+beta = 4.2663    # inverse coupling β
 c0   = 1.66666   # Symanzik coefficient (1.0 = Wilson plaquette action)
 
 
@@ -27,8 +27,8 @@ c0   = 1.66666   # Symanzik coefficient (1.0 = Wilson plaquette action)
 #          present together or all absent
 # ──────────────────────────────────────────────────────────────────────────────
 [hmc]
-ntherm     = 200   # thermalization trajectories (no measurements performed)
-ntraj      = 1000  # production trajectories
+ntherm     = 1000   # thermalization trajectories (no measurements performed)
+ntraj      = 5000  # production trajectories
 delta      = 0.1   # leapfrog step size δ
 nleaps     = 10    # number of leapfrog steps per trajectory
 
@@ -41,10 +41,10 @@ nleaps     = 10    # number of leapfrog steps per trajectory
 #   leave empty or "cold" → cold start (unit matrices)
 #   "hot"                 → random start
 #   "/path/to/file"       → load configuration from file
-start_from = ""
+start_from = "hot"
 save_to    = "./"   # directory for saved configurations; required if save_each
                     # or save_final is set
-save_final = false   # always save the last configuration
+save_final = true   # always save the last configuration
 # save_each = 10    # also save every N trajectories (comment out to disable)
 logfile    = ""     # path to log file; leave empty for stdout only
 
@@ -53,17 +53,17 @@ logfile    = ""     # path to log file; leave empty for stdout only
 # [flow]  — optional; flow_each/flow_type/epsilon/nflow must all be set together
 # ──────────────────────────────────────────────────────────────────────────────
 [flow]
-flow_each = 5                     # measure every N production trajectories
+flow_each = 50                  # measure every N production trajectories
 
 # Kernels to apply: "wilson", "zeuthen", or both.
 # Both kernels are run independently on the same unflowed configuration.
-flow_type = ["wilson", "zeuthen"]
+flow_type = ["wilson"]
 
 # Adaptive mode: step between consecutive flow_times using flw_adapt when the
 # interval does not match epsilon exactly, or a single fixed step otherwise.
 # flow_times defines the explicit measurement schedule — a non-uniform grid
 # (denser at small t, coarser at large t) is typical for scale-setting studies.
-adaptive   = true
+adaptive   = false
 epsilon    = 0.01   # base step size ε (used for fixed steps and as the
                     # integrator tolerance seed in flw_adapt)
 nflow      = 100    # only used in fixed-step mode (adaptive = false);
@@ -79,4 +79,4 @@ flow_times = [
 # Optional CSV output. When set, each configuration's rows are appended to
 # this file in a single write. When absent, flow data goes through the logger
 # (main log or a redirect file set via SimLogger redirects).
-flow_file = "B6.2_L16_flow.csv"
+flow_file = "SuperCoarse.csv"
